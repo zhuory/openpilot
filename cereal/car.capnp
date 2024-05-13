@@ -396,7 +396,7 @@ struct CarControl {
     currentCurvature @9: Float32;
     rawDesiredCurvature @10: Float32;
     rawPredictedCurvature @11: Float32;
-    laneChange @12 Float32;
+    laneChange @12: Float32;
     appApplyCurvature @13: Float32;
     curvyApplyCurvature @14: Float32;
     slowApplyCurvature @15: Float32;
