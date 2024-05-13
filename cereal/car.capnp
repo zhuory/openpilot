@@ -386,15 +386,25 @@ struct CarControl {
     brake @1: Float32;
     # range from -1.0 - 1.0
     steer @2: Float32;
-    # value sent over can to the car
-    steerOutputCan @8: Float32;
     steeringAngleDeg @3: Float32;
-
-    curvature @7: Float32;
-
-    speed @6: Float32; # m/s
     accel @4: Float32; # m/s^2
     longControlState @5: LongControlState;
+    speed @6: Float32; # m/s
+    curvature @7: Float32;
+    # value sent over can to the car
+    steerOutputCan @8: Float32;
+    currentCurvature @9: Float32;
+    rawDesiredCurvature @10: Float32;
+    rawPredictedCurvature @11: Float32;
+    laneChange @12 Float32;
+    appApplyCurvature @13: Float32;
+    curvyApplyCurvature @14: Float32;
+    slowApplyCurvature @15: Float32;
+    rightLaneChangeApplyCurvature @16: Float32;
+    LC1ApplyCurvature @17: Float32;
+    LC2ApplyCurvature @18: Float32;
+    limitedApplyCurvature @19: Float32;
+    humanTurnApplyCurvature @20: Float32; 
 
     enum LongControlState @0xe40f3a917d908282{
       off @0;

@@ -116,6 +116,8 @@ class CarController:
     # Deactivates at self.precharge_actutator_target + self.precharge_actutator_stdDevHigh
     self.target_speed_multiplier = 1 # Default: 0
 
+    self.new_actuators = None # this variable holds custom logging parameters
+
     # model specific tuning
     print(f'CarFingerprint: {self.CP.carFingerprint}')
     if self.CP.carFingerprint in CANFD_CAR:
@@ -170,6 +172,9 @@ class CarController:
     actuators = CC.actuators
     hud_control = CC.hudControl
 
+    if self.new_actuators is None: # check to see if any logs have been put into new actuators yet
+        self.new_actuators = actuators.copy() # initialize the logs
+
     main_on = CS.out.cruiseState.available
     steer_alert = hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw)
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
@@ -192,7 +197,11 @@ class CarController:
       if CC.latActive:
         # apply rate limits, curvature error limit, and clip to signal range
         current_curvature = -CS.out.yawRate / max(CS.out.vEgoRaw, 0.1)
+        self.new_actuators.currentCurvature = float(current_curvature)
+
         desired_curvature = actuators.curvature
+        self.new_actuators.rawDesiredCurvature = float(desired_curvature)
+
         # apply_curvature = apply_ford_curvature_limits(actuators.curvature, self.apply_curvature_last, current_curvature, CS.out.vEgoRaw)
         self.precision_type = 1 #precise by default
         # equate velocity
@@ -203,7 +212,9 @@ class CarController:
           future_time = 0.2 + self.future_lookup_time # 0.2 + SteerActutatorDelay
           # for now revert back to actuators.curvature because predicted curvature can't overcome the lack of path_offset
           predicted_curvature = interp(future_time, ModelConstants.T_IDXS, model_data.orientationRate.z) / vEgoRaw
-          predicted_curvature = apply_ford_curvature_limits(predicted_curvature, self.apply_curvature_last, current_curvature, vEgoRaw)
+          self.new_actuators.rawPredictedCurvature = float(current_curvature)
+
+          # predicted_curvature = apply_ford_curvature_limits(predicted_curvature, self.apply_curvature_last, current_curvature, vEgoRaw)
 
           # build an array to hold future curvatures, to help with straight away detection
           curvatures = np.array(model_data.acceleration.y) / (CS.out.vEgo ** 2)
@@ -217,29 +228,37 @@ class CarController:
             self.lane_change = True
         else:
             self.lane_change = False
+        self.new_actuators.laneChange = float(self.lane_change)
 
         # if at highway speeds, check for straight aways and apply anti ping pong logic
         if vEgoRaw > 24.56:
           if abs(desired_curvature) < self.max_app_curvature and curvature_1 < self.max_app_curvature and curvature_2 < self.max_app_curvature and curvature_3 < self.max_app_curvature:
               apply_curvature = ((predicted_curvature * self.app_PC_percentage) + (desired_curvature * (1- self.app_PC_percentage)))
               self.precision_type = 0 # comfort for straight aways
+              self.new_actuators.appApplyCurvature = float(apply_curvature)
           else:
               apply_curvature = desired_curvature
+              self.new_actuators.curvyApplyCurvature = float(apply_curvature)
         else:
             apply_curvature = desired_curvature
+            self.new_actuators.slowApplyCurvature = float(apply_curvature)
 
         # if changing lanes, blend PC and DC to smooth out the lane change.
         if self.lane_change:
             if apply_curvature > 0 and model_data.meta.laneChangeState == 1: # initial stages of a right lane change (positive in comma, negative when sent to Ford)
                 apply_curvature = apply_curvature * self.right_lc_modifier
+                self.new_actuators.rightLaneChangeApplyCurvature = float(apply_curvature)
             if apply_curvature < self.max_app_curvature: # if we are not changing lanes in a curve
                 if model_data.meta.laneChangeState == 1:
                   apply_curvature = apply_curvature * self.lc1_modifier
+                  self.new_actuators.LC1ApplyCurvature = float(apply_curvature)
                 if model_data.meta.laneChangeState == 2:
                   apply_curvature = apply_curvature * self.lc2_modifier
+                  self.new_actuators.LC2ApplyCurvature = float(apply_curvature)
             self.precision_type = 0 # comfort for lane change
 
         apply_curvature = apply_ford_curvature_limits(apply_curvature, self.apply_curvature_last, current_curvature, CS.out.vEgoRaw)
+        self.new_actuators.limitedApplyCurvature = float(apply_curvature)
 
       else:
         apply_curvature = 0.
@@ -251,6 +270,7 @@ class CarController:
       # if a human turn is active, reset steering to prevent windup
       if steeringPressed and abs(steeringAngleDeg) > 60:
         apply_curvature = 0
+        self.new_actuators.humanTurnApplyCurvature = float(apply_curvature)
         ramp_type = 3
       else:
         ramp_type = 0
