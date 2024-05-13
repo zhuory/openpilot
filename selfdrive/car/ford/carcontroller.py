@@ -326,7 +326,7 @@ class CarController:
     self.lkas_enabled_last = CC.latActive
     self.steer_alert_last = steer_alert
 
-    new_actuators = actuators.copy()
+    new_actuators = self.new_actuators
     new_actuators.curvature = self.apply_curvature_last
 
     self.frame += 1
