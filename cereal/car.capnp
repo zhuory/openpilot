@@ -401,8 +401,8 @@ struct CarControl {
     curvyApplyCurvature @14: Float32;
     slowApplyCurvature @15: Float32;
     rightLaneChangeApplyCurvature @16: Float32;
-    LC1ApplyCurvature @17: Float32;
-    LC2ApplyCurvature @18: Float32;
+    lC1ApplyCurvature @17: Float32;
+    lC2ApplyCurvature @18: Float32;
     limitedApplyCurvature @19: Float32;
     humanTurnApplyCurvature @20: Float32; 
 

@@ -251,10 +251,10 @@ class CarController:
             if apply_curvature < self.max_app_curvature: # if we are not changing lanes in a curve
                 if model_data.meta.laneChangeState == 1:
                   apply_curvature = apply_curvature * self.lc1_modifier
-                  self.new_actuators.LC1ApplyCurvature = float(apply_curvature)
+                  self.new_actuators.lC1ApplyCurvature = float(apply_curvature)
                 if model_data.meta.laneChangeState == 2:
                   apply_curvature = apply_curvature * self.lc2_modifier
-                  self.new_actuators.LC2ApplyCurvature = float(apply_curvature)
+                  self.new_actuators.lC2ApplyCurvature = float(apply_curvature)
             self.precision_type = 0 # comfort for lane change
 
         apply_curvature = apply_ford_curvature_limits(apply_curvature, self.apply_curvature_last, current_curvature, CS.out.vEgoRaw)
