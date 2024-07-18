@@ -103,6 +103,7 @@ class CarController:
     self.lc1_modifier = 0.80 # how much to reduce curvature during "starting lane change"
     self.lc2_modifier = 0.95 # how much to reduce curvature during "chanigng lanes"
     self.lane_change = False # initialize variable for capturing lane change status
+    self.explorer_factor = 0.9 # reduce curvature signal by a percentage for beta testing
 
     # Activates at self.brake_actutator_target - self.brake_actutator_stdDevLow
     self.brake_actutator_target = -0.5 # Default: -0.5
@@ -252,6 +253,8 @@ class CarController:
             if model_data.meta.laneChangeState == 2:
               apply_curvature = apply_curvature * self.lc2_modifier
           self.precision_type = 0 # comfort for lane change
+
+      apply_curvature = apply_curvature * self.explorer_factor
 
       else:
         apply_curvature = 0.
